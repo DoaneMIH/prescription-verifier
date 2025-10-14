@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0D9488">
+    <title>WVSU Prescription Verifier</title>
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- QR Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    
+    <style>
+        .scanner-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        #reader {
+            border: 2px solid #0D9488;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-teal-50 min-h-screen">
+    
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-6xl mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Prescription Verifier</h1>
+                        <p class="text-sm text-gray-600">WVSU Medical Clinic - Blockchain Authentication</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        
+        <!-- Search Section -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Verify Prescription</h2>
+                <p class="text-gray-600">Scan QR code or enter transaction hash</p>
+            </div>
+
+            <!-- Tab Selection -->
+            <div class="flex gap-2 mb-6">
+                <button id="scanTab" onclick="showScanMode()" class="flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg font-semibold transition-colors">
+                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Scan QR Code
+                </button>
+                <button id="manualTab" onclick="showManualMode()" class="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold transition-colors">
+                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                    </svg>
+                    Manual Entry
+                </button>
+            </div>
+
+            <!-- Scanner Mode -->
+            <div id="scannerMode" class="scanner-container">
+                <div id="reader"></div>
+                <div class="text-center mt-4">
+                    <p class="text-sm text-gray-600">Position the QR code within the frame</p>
+                </div>
+            </div>
+
+            <!-- Manual Entry Mode -->
+            <div id="manualMode" class="hidden">
+                <div class="flex gap-3">
+                    <input
+                        type="text"
+                        id="txHashInput"
+                        placeholder="Enter transaction hash (e.g., 0x1234...)"
+                        class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-all"
+                    />
+                    <button
+                        onclick="verifyPrescription()"
+                        id="verifyBtn"
+                        class="px-6 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition-colors flex items-center space-x-2"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                        <span>Verify</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Error Display -->
+            <div id="errorDisplay" class="hidden mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3">
+                <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-red-800" id="errorMessage"></p>
+            </div>
+        </div>
+
+        <!-- Results Container -->
+        <div id="resultsContainer" class="hidden"></div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-4xl mx-auto px-4 py-8 text-center text-sm text-gray-600">
+        <p>© 2024 WVSU Medical Clinic - Blockchain-Powered Prescription Verification</p>
+        <p class="mt-1">For pharmacy verification purposes only</p>
+    </footer>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://localhost:5000'; // UPDATE THIS TO YOUR BACKEND URL
+        let html5QrCode;
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            // Check for txHash in URL
+            const params = new URLSearchParams(window.location.search);
+            const hash = params.get('txHash') || params.get('tx');
+            if (hash) {
+                showManualMode();
+                document.getElementById('txHashInput').value = hash;
+                verifyPrescription();
+            } else {
+                initScanner();
+            }
+        });
+
+        // Initialize QR Scanner
+        function initScanner() {
+            html5QrCode = new Html5Qrcode("reader");
+            
+            const config = { 
+                fps: 10, 
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                onScanSuccess,
+                onScanError
+            ).catch(err => {
+                console.error("Camera error:", err);
+                showError("Camera access denied. Please use manual entry.");
+                showManualMode();
+            });
+        }
+
+        // QR Scan Success
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log(`Scan result: ${decodedText}`);
+            
+            // Stop scanning
+            html5QrCode.stop();
+            
+            // Extract txHash from URL if it's a full URL
+            let txHash = decodedText;
+            if (decodedText.includes('txHash=')) {
+                const urlParams = new URLSearchParams(decodedText.split('?')[1]);
+                txHash = urlParams.get('txHash') || urlParams.get('tx');
+            }
+            
+            // Verify the prescription
+            verifyPrescriptionByHash(txHash);
+        }
+
+        function onScanError(errorMessage) {
+            // Ignore scan errors (they're continuous)
+        }
+
+        // Mode Switching
+        function showScanMode() {
+            document.getElementById('scanTab').className = 'flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg font-semibold transition-colors';
+            document.getElementById('manualTab').className = 'flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold transition-colors';
+            document.getElementById('scannerMode').classList.remove('hidden');
+            document.getElementById('manualMode').classList.add('hidden');
+            
+            if (!html5QrCode) {
+                initScanner();
+            }
+        }
+
+        function showManualMode() {
+            document.getElementById('scanTab').className = 'flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold transition-colors';
+            document.getElementById('manualTab').className = 'flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg font-semibold transition-colors';
+            document.getElementById('scannerMode').classList.add('hidden');
+            document.getElementById('manualMode').classList.remove('hidden');
+            
+            if (html5QrCode) {
+                html5QrCode.stop().catch(err => console.log(err));
+            }
+        }
+
+        // Verification Functions
+        function verifyPrescription() {
+            const txHash = document.getElementById('txHashInput').value.trim();
+            if (!txHash) {
+                showError('Please enter a transaction hash');
+                return;
+            }
+            verifyPrescriptionByHash(txHash);
+        }
+
+        async function verifyPrescriptionByHash(txHash) {
+            if (!txHash || txHash.length < 10) {
+                showError('Invalid transaction hash');
+                return;
+            }
+
+            hideError();
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/prescriptions/verify/${txHash}`);
+                
+                if (!response.ok) {
+                    throw new Error('Prescription not found or verification failed');
+                }
+
+                const data = await response.json();
+                displayResults(data);
+            } catch (err) {
+                showError(err.message || 'Verification failed. Please try again.');
+                hideLoading();
+            }
+        }
+
+        // Display Functions
+        function showError(message) {
+            document.getElementById('errorDisplay').classList.remove('hidden');
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        function hideError() {
+            document.getElementById('errorDisplay').classList.add('hidden');
+        }
+
+        function showLoading() {
+            const btn = document.getElementById('verifyBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div><span>Verifying...</span>';
+            }
+        }
+
+        function hideLoading() {
+            const btn = document.getElementById('verifyBtn');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg><span>Verify</span>';
+            }
+        }
+
+        function displayResults(data) {
+            hideLoading();
+            
+            const container = document.getElementById('resultsContainer');
+            container.classList.remove('hidden');
+            
+            const statusColor = getStatusColor(data.verificationLevel);
+            const scoreColor = getScoreColor(data.verificationScore);
+            
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <!-- Status Banner -->
+                    <div class="rounded-2xl shadow-lg p-8 border-2 ${statusColor}">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-4">
+                                ${data.valid ? 
+                                    '<svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' :
+                                    '<svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+                                }
+                                <div>
+                                    <h3 class="text-2xl font-bold">
+                                        ${data.valid ? 'Prescription Verified ✓' : 'Verification Failed ✗'}
+                                    </h3>
+                                    <p class="text-sm opacity-75 mt-1">
+                                        Level: ${data.verificationLevel.replace(/_/g, ' ')}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-4xl font-bold ${scoreColor}">
+                                    ${data.verificationScore}%
+                                </div>
+                                <p class="text-sm opacity-75">Security Score</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Verification Checks -->
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
+                            ${Object.entries(data.checks).map(([key, value]) => `
+                                <div class="flex items-center space-x-2 text-sm">
+                                    ${value ?
+                                        '<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' :
+                                        '<svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>'
+                                    }
+                                    <span class="capitalize">${key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- Prescription Details -->
+                    <div class="bg-white rounded-2xl shadow-lg p-8">
+                        <h3 class="text-xl font-bold text-gray-900 mb-6">Prescription Details</h3>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="text-sm font-semibold text-gray-600">Transaction Hash</label>
+                                <p class="font-mono text-sm text-gray-900 bg-gray-50 p-3 rounded-lg mt-1 break-all">${data.prescription.txHash}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-gray-600">Issued Date</label>
+                                <p class="text-gray-900 mt-1">${new Date(data.prescription.issuedAt).toLocaleString()}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-gray-600">Payment Status</label>
+                                <p class="text-gray-900 mt-1 font-semibold ${data.prescription.feePaid ? 'text-green-600' : 'text-red-600'}">${data.prescription.status}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-gray-600">Access Status</label>
+                                <p class="text-gray-900 mt-1 font-semibold ${data.prescription.accessGranted ? 'text-green-600' : 'text-red-600'}">${data.prescription.accessGranted ? 'Access Granted' : 'Access Restricted'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${data.doctor ? `
+                    <!-- Doctor Information -->
+                    <div class="bg-white rounded-2xl shadow-lg p-8">
+                        <h3 class="text-xl font-bold text-gray-900 mb-6">Doctor Information</h3>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="text-sm font-semibold text-gray-600">Doctor Name</label>
+                                <p class="text-lg font-semibold text-gray-900 mt-1">Dr. ${data.doctor.name}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-gray-600">License Number</label>
+                                <p class="text-gray-900 mt-1">${data.doctor.license}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-gray-600">Status</label>
+                                <div class="mt-2 flex items-center space-x-4">
+                                    <div class="px-3 py-1 rounded-full text-sm font-semibold ${data.doctor.approved ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                        ${data.doctor.approved ? 'Approved' : 'Not Approved'}
+                                    </div>
+                                    <div class="px-3 py-1 rounded-full text-sm font-semibold ${data.doctor.active ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+                                        ${data.doctor.active ? 'Active' : 'Inactive'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            // Scroll to results
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function getStatusColor(level) {
+            switch (level) {
+                case 'FULLY_VERIFIED': return 'text-green-600 bg-green-50 border-green-200';
+                case 'VERIFIED': return 'text-green-600 bg-green-50 border-green-200';
+                case 'PARTIALLY_VERIFIED': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+                case 'UNVERIFIED': return 'text-red-600 bg-red-50 border-red-200';
+                default: return 'text-gray-600 bg-gray-50 border-gray-200';
+            }
+        }
+
+        function getScoreColor(score) {
+            if (score >= 90) return 'text-green-600';
+            if (score >= 70) return 'text-yellow-600';
+            return 'text-red-600';
+        }
+    </script>
+</body>
+</html>
